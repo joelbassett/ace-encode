@@ -20,7 +20,7 @@
     <header>
       <div class="inner">
         <h1>ACE - Encode</h1>
-        <h2>ACE - Encode (Automatic CD/DVD/BluRay Ripping &amp; Encoding)</h2>
+        <h2>Automatic CD/DVD/BluRay Ripping &amp; Encoding</h2>
         <a href="https://github.com/joelbassett/ace-encode" class="button"><small>View project on</small>GitHub</a>
       </div>
     </header>
@@ -28,10 +28,7 @@
     <div id="content-wrapper">
       <div class="inner clearfix">
         <section id="main-content">
-          <h1>
-<a name="welcome-to-ace---encode" class="anchor" href="#welcome-to-ace---encode"><span class="octicon octicon-link"></span></a>Welcome to ACE - Encode.</h1>
-
-<p>ACE-Encode was born from the need convert a whole CD/DVD/BluRay library (450+) into music &amp; movie files readable on a Home Theater PC (HTPC).</p>
+          <p>ACE-Encode was born from the need convert a whole CD/DVD/BluRay library (450+) into music &amp; movie files readable on a Home Theater PC (HTPC).</p>
 
 <p>ACE-Encode works by automatically ripping an inserted CD/DVD/BluRay to a folder (WARNING: Each BluRay can take up to 35+ GB of storage).</p>
 
@@ -200,6 +197,157 @@ x-content/video-bluray=ripbluray.desktop;
 
 <pre><code>$ sudo git pull
 </code></pre>
+
+<h1>
+<a name="installation-of-xbmc" class="anchor" href="#installation-of-xbmc"><span class="octicon octicon-link"></span></a>Installation of XBMC</h1>
+
+<p>The following is a small excerpt from <a href="http://wiki.xbmc.org/index.php?title=HOW-TO:Install_XBMC_for_Linux">HOW-TO: Install XBMC for Linux</a></p>
+
+<p>In Ubuntu execute the following:</p>
+
+<pre><code>$ sudo apt-get install python-software-properties pkg-config
+$ sudo apt-get install software-properties-common
+$ sudo add-apt-repository ppa:team-xbmc/ppa
+$ sudo apt-get update
+$ sudo apt-get install xbmc xbmc-eventclients-xbmc-send
+</code></pre>
+
+<p>And voila, XBMC is installed and can be started.</p>
+
+<h1>
+<a name="installation-of-couchpotato" class="anchor" href="#installation-of-couchpotato"><span class="octicon octicon-link"></span></a>Installation of CouchPotato</h1>
+
+<p>The following is a small excerpt from <a href="http://www.htpcbeginner.com/install-couchpotato-on-ubuntu/">HOW-TO: Install CouchPotato for Ubuntu</a></p>
+
+<p>You may install CouchPotato on Ubuntu by downloading the latest version from <a href="https://github.com/RuudBurger/CouchPotatoServer">here</a> and extracting.
+But I recommend running it from source (to keep up with the latest features and bug fixes) using Python with git as the updater. If you do not have python and git installed already, install them using the command below:</p>
+
+<pre><code>$ sudo apt-get install git-core python
+</code></pre>
+
+<p>Next, to install CouchPotato on Ubuntu, move to your home directory (or any other directory) and clone a copy of CouchPotato V2 from the git repository:</p>
+
+<pre><code>$ cd ~
+$ git clone git://github.com/RuudBurger/CouchPotatoServer.git .couchpotato
+</code></pre>
+
+<p>This will download the contents to the folder .couchpotato. The “.” in the front keeps the .couchpotato folder hidden. That is all there is to setup CouchPotato on Ubuntu.</p>
+
+<p>At a later stage, to update CouchPotato, just go into .couchpotato folder and type:</p>
+
+<pre><code>$ git pull
+</code></pre>
+
+<p>You may also update CouchPotato by clicking “Update to Latest” from the settings menu or click on the update notification that appears on top of the screen (shown below).</p>
+
+<p>After you install CouchPotato, use the following command to run it:</p>
+
+<pre><code>$ python ~/.couchpotato/CouchPotato.py
+</code></pre>
+
+<p>CouchPotato V2 is now running on your system (unless you encounter any errors). Unlike CouchPotato V1 (uses port 5000), V2 runs on port 5050 by default. So you can access the CouchPotato web interface by going to:</p>
+
+<pre><code>http://localhost:5050
+</code></pre>
+
+<h1>
+<a name="installation-of-abcde" class="anchor" href="#installation-of-abcde"><span class="octicon octicon-link"></span></a>Installation of ABCDE</h1>
+
+<p>The following is a small excerpt from <a href="http://pathartl.me/blog/2013/12/01/the-ultimate-automated-ripping-machine/">The Ultimate Automated Ripping Machine</a></p>
+
+<p>In Ubuntu execute the following:</p>
+
+<pre><code>$ sudo apt-get install abcde
+</code></pre>
+
+<p>And voila, ABCDE is installed and can be started.</p>
+
+<h1>
+<a name="installation-of-dvdbackup" class="anchor" href="#installation-of-dvdbackup"><span class="octicon octicon-link"></span></a>Installation of DVDBackup</h1>
+
+<p>The following is a small excerpt from <a href="http://pathartl.me/blog/2013/12/01/the-ultimate-automated-ripping-machine/">The Ultimate Automated Ripping Machine</a></p>
+
+<p>In Ubuntu execute the following:</p>
+
+<pre><code>$ sudo apt-get install dvdbackup
+
+</code></pre>
+
+<p>We also need to install libdvdcss to allow us to break DVD encryption. We’ll also need to install git (it’s usually the first thing I install on any machine along with vim) and clone the libdvdcss repo.</p>
+
+<pre><code>$ sudo apt-get install git
+$ git clone git://git.videolan.org/libdvdcss
+</code></pre>
+
+<p>Now we compile and install libdvdcss</p>
+
+<pre><code>$ ./configure
+$ make
+$ sudo make install
+$ echo '/usr/local/lib' &gt; /etc/ld.so.conf.d/libdvdcss.conf
+$ ldconfig -v
+</code></pre>
+
+<p>And voila, DVDBackup and libdvdcss is installed.</p>
+
+<h1>
+<a name="installation-of-handbrake" class="anchor" href="#installation-of-handbrake"><span class="octicon octicon-link"></span></a>Installation of HandBrake</h1>
+
+<p>The following is a small excerpt from <a href="http://pathartl.me/blog/2013/12/01/the-ultimate-automated-ripping-machine/">The Ultimate Automated Ripping Machine</a></p>
+
+<p>In Ubuntu execute the following:</p>
+
+<pre><code>$ sudo add-apt-repository ppa:stebbins/handbrake-snapshots
+$ sudo apt-get update
+$ sudo apt-get install handbrake-cli handbrake-gtk
+</code></pre>
+
+<p>And voila, HandBrake is installed and can be started.</p>
+
+<h1>
+<a name="installation-of-makemkv" class="anchor" href="#installation-of-makemkv"><span class="octicon octicon-link"></span></a>Installation of MakeMKV</h1>
+
+<p>The following is a small excerpt from <a href="http://pathartl.me/blog/2013/12/01/the-ultimate-automated-ripping-machine/">The Ultimate Automated Ripping Machine</a></p>
+
+<p>In Ubuntu execute the following:</p>
+
+<p>Just a little note, MakeMKV is not FOSS and does cost $50. The Beta version is currently free but can change at anytime.</p>
+
+<p>We’ll need some tools to help us with compiling and installing MakeMKV</p>
+
+<pre><code>$ sudo apt-get install build-essential libc6-dev libssl-dev libexpat1-dev libavcodec-dev libgl1-mesa-dev libqt4-dev
+</code></pre>
+
+<p>Now download the binaries and source for MakeMKV</p>
+
+<pre><code>$ wget http://www.makemkv.com/download/makemkv-bin-1.8.6.tar.gz
+$ wget http://www.makemkv.com/download/makemkv-oss-1.8.6.tar.gz
+</code></pre>
+
+<p>Extract</p>
+
+<pre><code>$ tar xvzf makemkv-oss-1.8.6.tar.gz
+$ tar xvzf makemkv-bin-1.8.6.tar.gz
+</code></pre>
+
+<p>Now we’ll go and run make and make install in each directory</p>
+
+<pre><code>$ cd makemkv-oss-1.8.6
+$ make -f makefile.linux
+$ sudo make -f makefile.linux install
+</code></pre>
+
+<pre><code>$ cd makemkv-bin-1.8.6
+$ make -f makefile.linux
+$ sudo make -f makefile.linux install
+</code></pre>
+
+<p>Cleanup time</p>
+
+<pre><code>$ rm -R makemkv*```
+</code></pre>
+
+<p>And voila, MakeMKV and related utilities are installed and can be started.</p>
 
 <h1>
 <a name="credits--authors--contributors" class="anchor" href="#credits--authors--contributors"><span class="octicon octicon-link"></span></a>Credits / Authors / Contributors</h1>
