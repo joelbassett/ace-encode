@@ -79,7 +79,7 @@ for DVD_TITLE in "${DVD_DIR_LIST[@]}"; do
 
 				# REMOVE RIPPED DVD FOLDER (RECOVER 3-4+GB)
                 		if [ "$DVD_ENABLE_CLEANUP" = 1 ]; then
-					# rm -R $DVD_OUTPUT_DIR/$DVD_TITLE;
+					rm -R $DVD_OUTPUT_DIR/$DVD_TITLE;
 				fi
 
 				# XBMC-NOTIFY : REMOVED RIPPED DVD
