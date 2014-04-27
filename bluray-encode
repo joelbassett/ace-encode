@@ -88,7 +88,7 @@ for BLURAY_TITLE in "${BLURAY_DIR_LIST[@]}"; do
 				fi
 
 				# EMAIL-NOTIFY : REMOVED RIPPED BLURAY
-                                if $[ "$GLOBAL_ENABLE_EMAIL" = 1 ]; then
+                                if [ "$GLOBAL_ENABLE_EMAIL" = 1 ]; then
 	                                echo "$(timestamp) -  REMOVED:  Removed backup of $BLURAY_TITLE" | mail -s "$BLURAY_ENCODER_NAME : Removed backup of $BLURAY_TITLE" $GLOBAL_EMAIL;
 				fi
 

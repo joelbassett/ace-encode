@@ -78,9 +78,9 @@ for DVD_TITLE in "${DVD_DIR_LIST[@]}"; do
             		if [[ "$DVD_ACTUALSIZE" -gt "$DVD_MINIMUMSIZE" ]]; then
 
 				# REMOVE RIPPED DVD FOLDER (RECOVER 3-4+GB)
-                		#if [ "$DVD_ENABLE_CLEANUP" = 1 ]; then
-				#	# rm -R $DVD_OUTPUT_DIR/$DVD_TITLE;
-				#fi
+                		if [ "$DVD_ENABLE_CLEANUP" = 1 ]; then
+					# rm -R $DVD_OUTPUT_DIR/$DVD_TITLE;
+				fi
 
 				# XBMC-NOTIFY : REMOVED RIPPED DVD
 		        	if [ "$GLOBAL_ENABLE_XBMC" = 1 ]; then
@@ -88,7 +88,7 @@ for DVD_TITLE in "${DVD_DIR_LIST[@]}"; do
 				fi
 
 				# EMAIL-NOTIFY : REMOVED RIPPED DVD
-                		if $[ "$GLOBAL_ENABLE_EMAIL" = 1 ]; then
+                		if [ "$GLOBAL_ENABLE_EMAIL" = 1 ]; then
 	                		echo "$(timestamp) -  REMOVED:  Removed backup of $DVD_TITLE" | mail -s "$DVD_ENCODER_NAME : Removed backup of $DVD_TITLE" $GLOBAL_EMAIL;
 				fi
 
