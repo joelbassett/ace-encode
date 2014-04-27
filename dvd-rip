@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# READ IN SETTINGS FILE
+CONFIG_FILE=/usr/bin/ace-encode/settings.conf 
+
+if [[ -f $CONFIG_FILE ]]; then
+        . $CONFIG_FILE 
+fi
+
+# FUNCTION : GET CURRENT TIMESTAMP
+timestamp() {
+  date +"%T"
+}
+
+# CHECK IF DVD FUNCTIONS ARE ENABLED
+if [ "$ENABLE_DVD" != 1 ]; then
+	exit;
+fi
+
+cd $DVD_OUTPUT_DIR
+
+# FIND THE DVD TITLE
+DVD_TITLE=$(blkid -o value -s LABEL $GLOBAL_SOURCE_DRIVE)
+
+# CLEAN UP THE DVD TITLE (REPLACE SPACES WITH UNDERSCORES)
+DVD_TITLE=${DVD_TITLE// /_}
+
+# COMMENCE THE BACKUP OF THE DVD
+if [ ! -d "$DVD_OUTPUT_DIR/$DVD_TITLE" ]; then
+
+	# LOG : COMMENCING RIP OF THIS DVD
+	echo "********************************* COMMENCING: $DVD_TITLE *********************************" >> $DVD_LOG_DIR/dvd-rip.log
+
+	# XBMC-NOTIFY : COMMENCING
+	if [ "$GLOBAL_ENABLE_XBMC" = 1 ]; then
+        	xbmc-send --host=$GLOBAL_XBMC_HOST -a "Notification($DVD_RIPPER_NAME, Commencing backup $DVD_TITLE,20000)";
+	fi
+
+	# EMAIL-NOTIFY : COMMENCING
+	if [ "$GLOBAL_ENABLE_EMAIL" = 1 ]; then
+		echo "$(timestamp): COMMENCING: Commencing backup of $DVD_TITLE" | mail -s "$DVD_RIPPER_NAME : Commencing backup of $DVD_TITLE" $GLOBAL_EMAIL;
+	fi
+
+	# LOG : COMMENCING
+	echo "$(timestamp) - COMMENCING: Commencing backup of $DVD_TITLE" >> $DVD_LOG_DIR/dvd-rip.log
+
+	# START DVD BACKUP
+	dvdbackup -i $GLOBAL_SOURCE_DRIVE -o $DVD_OUTPUT_DIR -M -n $DVD_TITLE >> $DVD_LOG_DIR/dvd-rip.log
+
+	# XBMC-NOTIFY : COMPLETED
+	if [ "$GLOBAL_ENABLE_XBMC" = 1 ]; then
+        	xbmc-send --host=$GLOBAL_XBMC_HOST -a "Notification($DVD_RIPPER_NAME, Completed backup $DVD_TITLE,20000)";
+	fi
+
+	# EMAIL-NOTIFY : COMPLETED
+	if [ "$GLOBAL_ENABLE_EMAIL" = 1 ]; then
+		echo "$(timestamp): COMPLETED: Completed backup of $DVD_TITLE" | mail -s "$DVD_RIPPER_NAME : Completed backup of $DVD_TITLE" $GLOBAL_EMAIL;
+	fi
+
+	# LOG : COMPLETED
+	echo "$(timestamp) - COMPLETED: Completed backup of $DVD_TITLE" >> $DVD_LOG_DIR/dvd-rip.log
+
+	# EJECT THE DISC
+	eject $GLOBAL_SOURCE_DRIVE >> $DVD_LOG_DIR/dvd-rip.log
+
+	# LOG : COMPLETED ENCODE OF THIS DVD
+	echo "*********************************  COMPLETED:  $DVD_TITLE  *********************************" >> $DVD_LOG_DIR/dvd-rip.log
+else
+        # LOG : RIPPED DVD FOLDER HAS ALREADY BEEN CREATED
+        echo "$(timestamp) - ERROR: $DVD_TITLE has already been created" >> $DVD_LOG_DIR/dvd-rip.log
+
+        # EJECT THE DISC
+        eject $GLOBAL_SOURCE_DRIVE >> $DVD_LOG_DIR/dvd-rip.log
+fi

@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Rip CD
+Comment=This will start the automated CD ripping process
+Exec=abcde
+TryExec=abcde
+MimeType=x-content/audio-cdda
+Type=Application

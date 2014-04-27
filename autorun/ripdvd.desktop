@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Rip DVD
+Comment=This will start the automated DVD ripping process
+Exec=/usr/bin/ace-encode/dvd-rip
+TryExec=/usr/bin/ace-encode/dvd-rip
+MimeType=x-content/video-dvd
+Type=Application

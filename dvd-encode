@@ -1,0 +1,119 @@
+#!/bin/bash
+
+# READ IN SETTINGS FILE
+CONFIG_FILE=/usr/bin/ace-encode/settings.conf
+
+if [[ -f $CONFIG_FILE ]]; then
+        . $CONFIG_FILE
+fi
+
+# FUNCTION : GET CURRENT TIMESTAMP
+timestamp() {
+  date +"%T"
+}
+
+# CHECK IF DVD FUNCTIONS ARE ENABLED
+if [ "$ENABLE_DVD" != 1 ]; then
+	exit;
+fi
+
+
+cd $DVD_OUTPUT_DIR
+
+# COMPILE LIST OF ALL RIPPED DVDS
+DVD_DIR_LIST=( $(find . -maxdepth 1 -type d -printf '%P\n') )
+
+for DVD_TITLE in "${DVD_DIR_LIST[@]}"; do
+	if [ "$DVD_TITLE" != 'logs' ] && [ ! -f $DVD_OUTPUT_DIR/$DVD_TITLE.$DVD_EXTENSION ]; then
+        	# LOG : COMMENCING ENCODE OF THIS DVD
+        	echo "*********************************  COMMENCING:  $DVD_TITLE  *********************************" >> $DVD_LOG_DIR/dvd-encode.log
+
+		# CHECK FOR THE HandBrakeCLI PROCESS AND GET THE PID
+		HANDBRAKE_PID=`ps aux|grep H\[a\]ndBrakeCLI`
+	   	set -- $HANDBRAKE_PID
+	    	HANDBRAKE_PID=$2
+
+	    	# WAIT UNTIL PREVIOUS HANDBRAKE PROCESS IS FINISHED
+	    	if [ -n "$HANDBRAKE_PID" ]
+	    	then
+	        	while [ -e /proc/$HANDBRAKE_PID ]; do sleep 1; done
+	    	fi
+
+	    	# XBMC-NOTIFY : COMMENCING
+		if [ "$GLOBAL_ENABLE_XBMC" = 1 ]; then
+		        xbmc-send --host=$GLOBAL_XBMC_HOST -a "Notification($DVD_ENCODER_NAME, Commencing encode $DVD_TITLE,20000)";
+		fi
+
+		# EMAIL-NOTIFY : COMMENCING
+	    	if [ "$GLOBAL_ENABLE_EMAIL" = 1 ]; then
+			echo "$(timestamp): COMMENCING:  Commencing encode of $DVD_TITLE" | mail -s "$DVD_ENCODER_NAME : Commencing encode of $DVD_TITLE" $GLOBAL_EMAIL;
+		fi
+
+       		# LOG : COMMENCING
+        	echo "$(timestamp) - COMMENCING:  Commencing encode of $DVD_TITLE" >> $DVD_LOG_DIR/dvd-encode.log
+
+		# COMMENCE THE ENCODING
+	    	HandBrakeCLI -i $DVD_OUTPUT_DIR/$DVD_TITLE -o $DVD_OUTPUT_DIR/$DVD_TITLE.$DVD_EXTENSION $DVD_HB_VIDEO $DVD_HB_AUDIO >> $DVD_LOG_DIR/dvd-encode.log
+
+		# XBMC-NOTIFY : COMPLETED ENCODE
+		if [ "$GLOBAL_ENABLE_XBMC" = 1 ]; then
+                	xbmc-send --host=$GLOBAL_XBMC_HOST -a "Notification($DVD_ENCODER_NAME, Completed encode of $DVD_TITLE,20000)";
+		fi
+
+		# EMAIL-NOTIFY : COMPLETED ENCODE
+ 		if [ "$GLOBAL_ENABLE_EMAIL" = 1 ]; then
+			echo "$(timestamp) - COMPLETED:  Completed encode of $DVD_TITLE" | mail -s "$DVD_ENCODER_NAME : Completed encode of $DVD_TITLE" $GLOBAL_EMAIL;
+		fi
+
+        	# LOG : COMPLETED ENCODE
+        	echo "$(timestamp) - COMPLETED:  Completed encode of $DVD_TITLE" >> $DVD_LOG_DIR/dvd-encode.log
+
+		# CHECK IF FILEN HAS BEEN ENCODED SUCCESSFULLY
+        	if [ -f "$DVD_OUTPUT_DIR/$DVD_TITLE.$DVD_EXTENSION" ]; then
+
+			# GET FILESIZE OF ENCODED FILE
+            		DVD_ACTUALSIZE=$(stat -c%s "$DVD_OUTPUT_DIR/$DVD_TITLE.$DVD_EXTENSION")
+
+			# COMPARE ENCODED FILESIZE TO MINIMUM (RESONABLY EXPECTED) FILESIZE - HELPS SPOT ERRORS
+            		if [[ "$DVD_ACTUALSIZE" -gt "$DVD_MINIMUMSIZE" ]]; then
+
+				# REMOVE RIPPED DVD FOLDER (RECOVER 3-4+GB)
+                		#if [ "$DVD_ENABLE_CLEANUP" = 1 ]; then
+				#	# rm -R $DVD_OUTPUT_DIR/$DVD_TITLE;
+				#fi
+
+				# XBMC-NOTIFY : REMOVED RIPPED DVD
+		        	if [ "$GLOBAL_ENABLE_XBMC" = 1 ]; then
+					xbmc-send --host=$GLOBAL_XBMC_HOST -a "Notification($DVD_ENCODER_NAME, Removed backup of $DVD_TITLE,20000)";
+				fi
+
+				# EMAIL-NOTIFY : REMOVED RIPPED DVD
+                		if $[ "$GLOBAL_ENABLE_EMAIL" = 1 ]; then
+	                		echo "$(timestamp) -  REMOVED:  Removed backup of $DVD_TITLE" | mail -s "$DVD_ENCODER_NAME : Removed backup of $DVD_TITLE" $GLOBAL_EMAIL;
+				fi
+
+		        	# LOG : REMOVED RIPPED DVD
+                		echo "$(timestamp) -  REMOVED:  Removed backup of $DVD_TITLE" >> $DVD_LOG_DIR/dvd-encode.log
+
+				# CHECK FOR COUCHPOTATO BLACKHOLE
+				if [ "$DVD_ENABLE_BLACKHOLE" = 1 ]; then
+					# MOVE RIPPED DVD TO BLACKHOLE
+	                		mv $DVD_OUTPUT_DIR/$DVD_TITLE.$DVD_EXTENSION $DVD_BLACKHOLE_DIR/$DVD_TITLE.$DVD_EXTENSION >> $DVD_LOG_DIR/dvd-encode.log
+
+ 	                		# LOG : MOVED ENCODED DVD TO BLACKHOLE
+		            		echo "$(timestamp) - MOVED:  $DVD_OUTPUT_DIR/$DVD_TITLE.$DVD_EXTENSION --> $DVD_BLACKHOLE_DIR/$DVD_TITLE.$DVD_EXTENSION" >> $DVD_LOG_DIR/dvd-encode.log
+					chmod -R 777 $DVD_BLACKHOLE_DIR
+				fi
+            		else
+                		# LOG : RIPPED DVD WAS NOT BIGGER THAN THE MINIMUM FILESIZE EXPECTED
+                		echo "$(timestamp) - ERROR: $DVD_OUTPUT_DIR/$DVD_TITLE.$DVD_EXTENSION ($DVD_ACTUALSIZE) is under $DVD_MINIMUMSIZE bytes" >> $DVD_LOG_DIR/dvd-encode.log
+            		fi
+        	else
+            		# LOG : RIPPED DVD WAS NEVER CREATED (ERROR WITH HANDBRAKE ENCODE)
+	        	echo "$(timestamp) - ERROR: $DVD_OUTPUT_DIR/$DVD_TITLE.$DVD_EXTENSION was never created" >> $DVD_LOG_DIR/dvd-encode.log
+        	fi
+        # LOG : COMPLETED ENCODE OF THIS DVD
+	echo "*********************************  COMPLETING:  $DVD_TITLE  *********************************" >> $DVD_LOG_DIR/dvd-encode.log
+    fi
+done
+

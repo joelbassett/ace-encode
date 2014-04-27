@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=Rip Blu-Ray
+Comment=This will start the automated Blu-Ray ripping process
+Exec=/usr/bin/ace-encode/bluray-rip
+TryExec=/usr/bin/ace-encode/bluray-rip
+MimeType=x-content/video-bluray
+Type=Application

@@ -1,0 +1,119 @@
+#!/bin/bash
+
+# READ IN SETTINGS FILE
+CONFIG_FILE=/usr/bin/ace-encode/settings.conf
+
+if [[ -f $CONFIG_FILE ]]; then
+        . $CONFIG_FILE
+fi
+
+# FUNCTION : GET CURRENT TIMESTAMP
+timestamp() {
+  date +"%T"
+}
+
+# CHECK IF BLURAY FUNCTIONS ARE ENABLED
+if [ "$ENABLE_BLURAY" != 1 ]; then
+	exit;
+fi
+
+
+cd $BLURAY_OUTPUT_DIR
+
+# COMPILE LIST OF ALL RIPPED BLURAYS
+BLURAY_DIR_LIST=( $(find . -maxdepth 1 -type d -printf '%P\n') )
+
+for BLURAY_TITLE in "${BLURAY_DIR_LIST[@]}"; do
+	if [ "$BLURAY_TITLE" != 'logs' ] && [ ! -f $BLURAY_OUTPUT_DIR/$BLURAY_TITLE.$BLURAY_EXTENSION ]; then
+                # LOG : COMMENCING ENCODE OF THIS BLURAY
+                echo "*********************************  COMMENCING:  $BLURAY_TITLE  *********************************" >> $BLURAY_LOG_DIR/bluray-encode.log
+
+	        # CHECK FOR THE HandBrakeCLI PROCESS AND GET THE PID
+	        HANDBRAKE_PID=`ps aux|grep H\[a\]ndBrakeCLI`
+	        set -- $HANDBRAKE_PID
+	        HANDBRAKE_PID=$2
+
+	        # WAIT UNTIL PREVIOUS HANDBRAKE PROCESS IS FINISHED
+	        if [ -n "$HANDBRAKE_PID" ]
+	        then
+	                while [ -e /proc/$HANDBRAKE_PID ]; do sleep 1; done
+	        fi
+
+	        # XBMC-NOTIFY : COMMENCING
+		if [ "$GLOBAL_ENABLE_XBMC" = 1 ]; then
+		        xbmc-send --host=$GLOBAL_XBMC_HOST -a "Notification($BLURAY_ENCODER_NAME, Commencing encode $BLURAY_TITLE,20000)";
+		fi
+
+		# EMAIL-NOTIFY : COMMENCING
+	        if [ "$GLOBAL_ENABLE_EMAIL" = 1 ]; then
+			echo "$(timestamp): COMMENCING:  Commencing encode of $BLURAY_TITLE" | mail -s "$BLURAY_ENCODER_NAME : Commencing encode of $BLURAY_TITLE" $GLOBAL_EMAIL;
+		fi
+
+                # LOG : COMMENCING
+                echo "$(timestamp) - COMMENCING:  Commencing encode of $BLURAY_TITLE" >> $BLURAY_LOG_DIR/bluray-encode.log
+
+		# COMMENCE THE ENCODING
+	        HandBrakeCLI -i $BLURAY_OUTPUT_DIR/$BLURAY_TITLE -o $BLURAY_OUTPUT_DIR/$BLURAY_TITLE.$BLURAY_EXTENSION $BLURAY_HB_VIDEO $BLURAY_HB_AUDIO >> $BLURAY_LOG_DIR/bluray-encode.log
+
+		# XBMC-NOTIFY : COMPLETED ENCODE
+		if [ "$GLOBAL_ENABLE_XBMC" = 1 ]; then
+                	xbmc-send --host=$GLOBAL_XBMC_HOST -a "Notification($BLURAY_ENCODER_NAME, Completed encode of $BLURAY_TITLE,20000)";
+		fi
+
+		# EMAIL-NOTIFY : COMPLETED ENCODE
+ 		if [ "$GLOBAL_ENABLE_EMAIL" = 1 ]; then
+			echo "$(timestamp) - COMPLETED:  Completed encode of $BLURAY_TITLE" | mail -s "$BLURAY_ENCODER_NAME : Completed encode of $BLURAY_TITLE" $GLOBAL_EMAIL;
+		fi
+
+                # LOG : COMPLETED ENCODE
+                echo "$(timestamp) - COMPLETED:  Completed encode of $BLURAY_TITLE" >> $BLURAY_LOG_DIR/bluray-encode.log
+
+		# CHECK IF FILEN HAS BEEN ENCODED SUCCESSFULLY
+                if [ -f "$BLURAY_OUTPUT_DIR/$BLURAY_TITLE.$BLURAY_EXTENSION" ]; then
+
+			# GET FILESIZE OF ENCODED FILE
+                        BLURAY_ACTUALSIZE=$(stat -c%s "$BLURAY_OUTPUT_DIR/$BLURAY_TITLE.$BLURAY_EXTENSION")
+
+			# COMPARE ENCODED FILESIZE TO MINIMUM (RESONABLY EXPECTED) FILESIZE - HELPS SPOT ERRORS
+                        if [[ "$BLURAY_ACTUALSIZE" -gt "$BLURAY_MINIMUMSIZE" ]]; then
+
+				# REMOVE RIPPED BLURAY FOLDER (RECOVER 30+GB)
+                                if [ "$BLURAY_ENABLE_CLEANUP" = 1 ]; then
+					rm -R $BLURAY_OUTPUT_DIR/$BLURAY_TITLE;
+				fi
+
+				# XBMC-NOTIFY : REMOVED RIPPED BLURAY
+		                if [ "$GLOBAL_ENABLE_XBMC" = 1 ]; then
+					xbmc-send --host=$GLOBAL_XBMC_HOST -a "Notification($BLURAY_ENCODER_NAME, Removed backup of $BLURAY_TITLE,20000)";
+				fi
+
+				# EMAIL-NOTIFY : REMOVED RIPPED BLURAY
+                                if $[ "$GLOBAL_ENABLE_EMAIL" = 1 ]; then
+	                                echo "$(timestamp) -  REMOVED:  Removed backup of $BLURAY_TITLE" | mail -s "$BLURAY_ENCODER_NAME : Removed backup of $BLURAY_TITLE" $GLOBAL_EMAIL;
+				fi
+
+		                # LOG : REMOVED RIPPED BLURAY
+                                echo "$(timestamp) -  REMOVED:  Removed backup of $BLURAY_TITLE" >> $BLURAY_LOG_DIR/bluray-encode.log
+
+				# CHECK FOR COUCHPOTATO BLACKHOLE
+				if [ "$BLURAY_ENABLE_BLACKHOLE" = 1 ]; then
+					# MOVE RIPPED BLURAY TO BLACKHOLE
+	                                mv $BLURAY_OUTPUT_DIR/$BLURAY_TITLE.$BLURAY_EXTENSION $BLURAY_BLACKHOLE_DIR/$BLURAY_TITLE.$BLURAY_EXTENSION >> $BLURAY_LOG_DIR/bluray-encode.log
+
+ 	                                # LOG : MOVED ENCODED BLURAY TO BLACKHOLE
+		                        echo "$(timestamp) - MOVED:  $BLURAY_OUTPUT_DIR/$BLURAY_TITLE.$BLURAY_EXTENSION --> $BLURAY_BLACKHOLE_DIR/$BLURAY_TITLE.$BLURAY_EXTENSION" >> $BLURAY_LOG_DIR/bluray-encode.log
+                	                chmod -R 777 $BLURAY_BLACKHOLE_DIR
+				fi
+                        else
+                                # LOG : RIPPED BLURAY WAS NOT BIGGER THAN THE MINIMUM FILESIZE EXPECTED
+                                echo "$(timestamp) - ERROR: $BLURAY_OUTPUT_DIR/$BLURAY_TITLE.$BLURAY_EXTENSION ($BLURAY_ACTUALSIZE) is under $BLURAY_MINIMUMSIZE bytes" >> $BLURAY_LOG_DIR/bluray-encode.log
+                        fi
+                else
+        	        # LOG : RIPPED BLURAY WAS NEVER CREATED (ERROR WITH HANDBRAKE ENCODE)
+	                echo "$(timestamp) - ERROR: $BLURAY_OUTPUT_DIR/$BLURAY_TITLE.$BLURAY_EXTENSION was never created" >> $BLURAY_LOG_DIR/bluray-encode.log
+                fi
+                # LOG : COMPLETED ENCODE OF THIS BLURAY
+		echo "*********************************  COMPLETING:  $BLURAY_TITLE  *********************************" >> $BLURAY_LOG_DIR/bluray-encode.log
+        fi
+done
+
